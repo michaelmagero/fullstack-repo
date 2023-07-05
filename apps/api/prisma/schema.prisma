@@ -6,12 +6,231 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id        Int       @id @default(autoincrement())
+  firstname String
+  lastname  String
+  email     String    @unique
+  phone     String    @unique
+  password  String?
+  status    Boolean
+  role      Role
+  profile   Profile?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Company   Company?
+  Site      Site?
+  Task      Task?
+  Purchase  Purchase?
+}
+
+model Profile {
+  id                  Int       @id @default(autoincrement())
+  bio                 String?
+  profile_picture     String?
+  id_number           Int?
+  alternative_contact String?
+  address             Json?
+  dob                 String?
+  isPublic            Boolean?
+  user                User      @relation(fields: [userId], references: [id])
+  userId              Int       @unique
+  Employee            Employee?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Company {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  phone     String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    Int        @unique
+  Expense   Expense?
+  Employee  Employee[]
+  Purchase  Purchase?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Site {
+  id         Int         @id @default(autoincrement())
+  name       String
+  location   String
+  site_agent User        @relation(fields: [userId], references: [id])
+  userId     Int         @unique
+  site_type  String
+  Attendance Attendance?
+  Expense    Expense?
+  Employee   Employee[]
+  Task       Task?
+  Purchase   Purchase?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Employee {
+  id        Int        @id @default(autoincrement())
+  firstname String
+  lastname  String
+  email     String     @unique
+  phone     String     @unique
+  password  String?
+  status    Boolean
+  profile   Profile    @relation(fields: [profileId], references: [id])
+  profileId Int        @unique
+  Company   Company?   @relation(fields: [companyId], references: [id])
+  companyId Int        @unique
+  Site      Site?      @relation(fields: [siteId], references: [id])
+  siteId    Int        @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Equipment Equipment?
+}
+
+model Attendance {
+  id           Int      @id @default(autoincrement())
+  name         String
+  site         Site     @relation(fields: [siteId], references: [id])
+  siteId       Int      @unique
+  task         Task     @relation(fields: [taskId], references: [id])
+  taskId       Int      @unique
+  no_of_days   Int
+  daily_rate   Decimal  @db.Decimal(10, 2)
+  total_amount Decimal  @db.Decimal(10, 2)
+  status       Boolean
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Task {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  site        Site        @relation(fields: [siteId], references: [id])
+  siteId      Int         @unique
+  supervisor  User        @relation(fields: [userId], references: [id])
+  userId      Int         @unique
+  workers     Int
+  Attendance  Attendance?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Inventory {
+  id            Int         @id @default(autoincrement())
+  machine       Machine     @relation(fields: [machineId], references: [id])
+  machineId     Int         @unique
+  raw_material  RawMaterial @relation(fields: [rawmaterialId], references: [id])
+  rawmaterialId Int         @unique
+  equipment     Equipment   @relation(fields: [equipmentId], references: [id])
+  equipmentId   Int         @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Machine {
+  id              Int        @id @default(autoincrement())
+  name            String
+  registration_no String
+  hired_from      String
+  hired_on        DateTime
+  hourly_rate     Decimal    @db.Decimal(10, 2)
+  no_of_days      Int
+  Inventory       Inventory?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model RawMaterial {
+  id        Int        @id @default(autoincrement())
+  name      String
+  quantity  Int
+  supplier  String
+  price     Decimal    @db.Decimal(10, 2)
+  Inventory Inventory?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Equipment {
+  id          Int        @id @default(autoincrement())
+  name        String
+  condition   String
+  quantity    Int
+  assigned_to Employee   @relation(fields: [employeeId], references: [id])
+  employeeId  Int        @unique
+  Inventory   Inventory?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int      @unique
+  site        Site     @relation(fields: [siteId], references: [id])
+  siteId      Int      @unique
+  quantity    Int
+  rate        Decimal  @db.Decimal(9, 2)
+  amount      Decimal  @db.Decimal(9, 2)
+  fuel_type   String?
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id           Int      @id @default(autoincrement())
+  payment_type String
+  amount       Decimal  @db.Decimal(10, 2)
+  payment_for  String
+  initiated_by String
+  approved_by  String
+  paid_by      String
+  paid_on      DateTime
+  status       Boolean
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Document {
+  id            Int      @id @default(autoincrement())
+  document_name String
+  document_type String
+  document_link String
+  generated_by  String
+  generated_for String
+  generated_on  DateTime
+  status        Boolean
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Purchase {
+  id          Int      @id @default(autoincrement())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int      @unique
+  site        Site     @relation(fields: [siteId], references: [id])
+  siteId      Int      @unique
+  description String
+  rate        Decimal  @db.Decimal(9, 2)
+  amount      Decimal  @db.Decimal(9, 2)
+  approved_by User     @relation(fields: [userId], references: [id])
+  userId      Int      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  admin
+  site_agent
+  accountant
+  supplier
+  supervisor
 }
